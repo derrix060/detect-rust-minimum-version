@@ -1,0 +1,38 @@
+name: Minimum Supported Rust
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  find-smallest-rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: itself
+      - uses: actions/checkout@v4
+        with:
+          repository: NethermindEth/juno
+          path: juno
+          ref: 153e651f156fd579a9e4e6676fe3ca9b881b05c2
+      - name: Find smallest supported Rust version
+        id: current
+        uses: ./itself
+        with:
+          paths: juno/core/rust/,juno/vm/rust/,juno/starknet/rust/
+
+      - name: Compare versions
+        run: |
+          set -euo pipefail
+
+          expected_msrv="1.80.1"
+          current_msrv="${{ steps.current.outputs.highest-msrv }}"
+          if [[ "$expected_msrv" != "$current_msrv" ]]; then
+            echo "Minimum supported Rust version is $current_msrv, expected $expected_msrv"
+            exit 1
+          else
+            echo "Minimum supported Rust version is $current_msrv as expected"
+          fi
