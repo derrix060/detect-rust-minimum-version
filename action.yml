@@ -1,0 +1,75 @@
+name: "Find Minimum Required Rust Version"
+
+description: "Runs cargo-msrv on multiple paths and finds the highest minimum Rust version required."
+author: "derrix060"
+
+branding:
+  icon: "eye"
+  color: "red"
+
+inputs:
+  paths:
+    description: "Comma-separated list of paths to run cargo-msrv.  Defaults to the current directory"
+    default: "."
+
+outputs:
+  highest-msrv:
+    description: "The highest minimum Rust version required."
+    value: ${{ steps.cargo-msrv.outputs.highest-msrv }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        components: cargo-msrv
+
+    - name: Setup jq
+      uses: dcarbone/install-jq-action@v2.1.0
+
+    - name: Run cargo-msrv for each path
+      id: cargo-msrv
+      shell: bash
+      run: |
+        # Split the input paths by commas
+        IFS=',' read -r -a paths <<< "${{ inputs.paths }}"
+        
+        # Initialize the highest version variable
+        highest_msrv="0.0.0"
+
+        # Function to compare versions
+        compare_versions() {
+          if [ "$1" == "$2" ]; then
+            return 0
+          elif [[ "$1" == "$(echo -e "$1\n$2" | sort -V | head -n1)" ]]; then
+            return 1
+          else
+            return 2
+          fi
+        }
+
+        # Loop through all paths and run cargo-msrv
+        for path in "${paths[@]}"; do
+          echo "Running cargo-msrv for $path"
+          version=$(cargo msrv --path "$path" --output-format json | jq -r '.msrv')
+          
+          if [ "$version" == "null" ]; then
+            echo "Could not find MSRV for $path"
+            exit 1
+          fi
+
+          echo "Found MSRV $version for $path"
+
+          # Compare and store the highest version
+          compare_versions $highest_msrv $version
+          result=$?
+          if [ "$result" -eq 2 ]; then
+            highest_msrv=$version
+          fi
+        done
+
+        echo "The highest MSRV is $highest_msrv"
+
+        # Set output
+        echo "::set-output name=highest-msrv::$highest_msrv"
