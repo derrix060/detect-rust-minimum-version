@@ -23,7 +23,11 @@ runs:
     - name: Setup Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        components: cargo-msrv
+        components: cargo
+
+    - name: Install cargo-msrv
+      shell: bash
+      run: cargo install cargo-msrv
 
     - name: Setup jq
       uses: dcarbone/install-jq-action@v2.1.0
@@ -32,6 +36,8 @@ runs:
       id: cargo-msrv
       shell: bash
       run: |
+        set -euxo pipefail
+
         # Split the input paths by commas
         IFS=',' read -r -a paths <<< "${{ inputs.paths }}"
         
@@ -40,31 +46,33 @@ runs:
 
         # Function to compare versions
         compare_versions() {
-          if [ "$1" == "$2" ]; then
-            return 0
-          elif [[ "$1" == "$(echo -e "$1\n$2" | sort -V | head -n1)" ]]; then
-            return 1
+          if [[ "$1" == "$2" ]]; then
+            echo 0
+          elif [[ "$1" == "$(echo -e "$1\n$2" | sort -Vr | head -n1)" ]]; then
+            echo 1
           else
-            return 2
+            echo 2
           fi
         }
 
         # Loop through all paths and run cargo-msrv
         for path in "${paths[@]}"; do
           echo "Running cargo-msrv for $path"
-          version=$(cargo msrv --path "$path" --output-format json | jq -r '.msrv')
-          
-          if [ "$version" == "null" ]; then
+          rm -f logs
+          cargo msrv --path $path --output-format json --no-log > logs
+          version=$(cat logs | grep "msrv-complete" | jq -r '.msrv')
+          if [[ "$version" == "null" ]]; then
             echo "Could not find MSRV for $path"
+            cat logs
             exit 1
           fi
 
           echo "Found MSRV $version for $path"
 
           # Compare and store the highest version
-          compare_versions $highest_msrv $version
-          result=$?
-          if [ "$result" -eq 2 ]; then
+          result=$(compare_versions $highest_msrv $version)
+          if [[ "$result" -eq "2" ]]; then
+            echo "Found higher MSRV $version than $highest_msrv"
             highest_msrv=$version
           fi
         done
@@ -72,4 +80,4 @@ runs:
         echo "The highest MSRV is $highest_msrv"
 
         # Set output
-        echo "::set-output name=highest-msrv::$highest_msrv"
+        echo "highest-msrv=$highest_msrv" >> $GITHUB_OUTPUT
