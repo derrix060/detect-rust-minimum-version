@@ -24,13 +24,16 @@ jobs:
 
         steps:
             - name: Checkout repository
-                uses: actions/checkout@v4
+              uses: actions/checkout@v4
 
             - name: Detect Rust Minimum Version
-                uses: derrix060/detect-rust-minimum-version@v1
-                with: repo/my-path1,repo/my-path2
+              id: rust-version
+              uses: derrix060/detect-rust-minimum-version@v1
+              with:
+                repos: repo/my-path1,repo/my-path2
             
-            - name: 
+            - name: Print version
+              run: echo "Minimum rust version is ${{ steps.rust-version.outputs.highest-msrv }}"
 ```
 
 ## Inputs
