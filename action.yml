@@ -58,12 +58,10 @@ runs:
         # Loop through all paths and run cargo-msrv
         for path in "${paths[@]}"; do
           echo "Running cargo-msrv for $path"
-          rm -f logs
-          cargo msrv --path $path --output-format json --no-log > logs
-          version=$(cat logs | grep "msrv-complete" | jq -r '.msrv')
+          cargo msrv find --path $path --output-format json --no-log  2>&1 | tee logs.txt
+          version=$(tail -1 logs.txt | jq -r '.result.version')
           if [[ "$version" == "null" ]]; then
             echo "Could not find MSRV for $path"
-            cat logs
             exit 1
           fi
 
