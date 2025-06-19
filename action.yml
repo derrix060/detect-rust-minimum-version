@@ -30,7 +30,7 @@ runs:
       run: cargo install cargo-msrv
 
     - name: Setup jq
-      uses: dcarbone/install-jq-action@v3.0.1
+      uses: dcarbone/install-jq-action@v3.2.0
 
     - name: Run cargo-msrv for each path
       id: cargo-msrv
