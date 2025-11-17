@@ -27,7 +27,7 @@ runs:
 
     - name: Install cargo-msrv
       shell: bash
-      run: cargo install --locked cargo-msrv@0.18.4
+      run: cargo install cargo-msrv@0.18.4
 
     - name: Setup jq
       uses: dcarbone/install-jq-action@v3.0.1
