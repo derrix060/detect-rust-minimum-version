@@ -10,10 +10,10 @@ jobs:
   find-smallest-rust:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           path: itself
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           repository: NethermindEth/juno
           path: juno
