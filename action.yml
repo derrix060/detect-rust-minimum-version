@@ -38,6 +38,18 @@ runs:
     - name: Setup jq
       uses: dcarbone/install-jq-action@v3.2.0
 
+    - name: Pre-fetch dependencies
+      if: ${{ inputs.locked == 'true' }}
+      shell: bash
+      run: |
+        # Pre-fetch dependencies to ensure cargo registry index is synced
+        # and crates are cached before cargo-msrv runs with --locked
+        IFS=',' read -r -a paths <<< "${{ inputs.paths }}"
+        for path in "${paths[@]}"; do
+          echo "Fetching dependencies for $path"
+          cargo fetch --locked --manifest-path "${path}/Cargo.toml" || true
+        done
+
     - name: Run cargo-msrv for each path
       id: cargo-msrv
       shell: bash
