@@ -69,7 +69,9 @@ runs:
 
         locked_arg=""
         if [[ "${{ inputs.locked }}" == "true" ]]; then
-          locked_arg="-- --locked"
+          # The -- separator replaces the default cargo check command entirely,
+          # so we must specify the full command including 'cargo check'
+          locked_arg="-- cargo check --locked"
         fi
 
         # Loop through all paths and run cargo-msrv
