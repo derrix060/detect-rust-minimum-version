@@ -25,7 +25,7 @@ jobs:
         id: current
         uses: ./itself
         with:
-          paths: juno/core/rust/,juno/vm/rust/
+          paths: juno/core/rust/,juno/vm/rust/,starknet/compiler/rust/
           min: "1.78.0" # Cargo.lock v4 requires Rust 1.78+
           locked: "true" # Enforce using Cargo.lock to prevent dependency drift
 
